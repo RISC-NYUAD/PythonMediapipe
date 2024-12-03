@@ -7,27 +7,24 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import time
 
-# Create PoseLandmarker object
 pose_options = vision.PoseLandmarkerOptions(
     base_options=python.BaseOptions(
-        model_asset_path="pose_landmarker.task",
+        model_asset_path="pose_landmarker_full.task",
         delegate=python.BaseOptions.Delegate.GPU
     ),
     output_segmentation_masks=True
 )
 pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 
-# Create HandLandmarker object
 hand_options = vision.HandLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="hand_landmarker.task",
         delegate=python.BaseOptions.Delegate.GPU
     ),
-    num_hands=2  # Max number of hands to detect
+    num_hands=2 
 )
 hand_detector = vision.HandLandmarker.create_from_options(hand_options)
 
-# Function to draw pose landmarks
 def draw_pose_landmarks(rgb_image, detection_result):
     pose_landmarks_list = detection_result.pose_landmarks
     annotated_image = np.copy(rgb_image)
@@ -55,7 +52,6 @@ def draw_pose_landmarks(rgb_image, detection_result):
         )
     return annotated_image
 
-# Function to draw hand landmarks
 def draw_hand_landmarks(rgb_image, detection_result):
     hand_landmarks_list = detection_result.hand_landmarks
     annotated_image = np.copy(rgb_image)
@@ -83,12 +79,14 @@ def draw_hand_landmarks(rgb_image, detection_result):
         )
     return annotated_image
 
-# Initialize webcam capture
 capture = cv2.VideoCapture(0)
 
 if not capture.isOpened():
     print("Failed to open video source")
     exit()
+
+capture.set(3, 1920)
+capture.set(4, 1080)
 
 source_fps = int(capture.get(cv2.CAP_PROP_FPS))
 source_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -101,7 +99,6 @@ outResult = cv2.VideoWriter("result.mp4", fourcc, source_fps, (source_width, sou
 
 previousTime = 0
 
-# Process video feed
 while capture.isOpened():
     ret, frame = capture.read()
 
@@ -112,11 +109,9 @@ while capture.isOpened():
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
 
-    # Detect pose and hand landmarks
     pose_result = pose_detector.detect(mp_image)
     hand_result = hand_detector.detect(mp_image)
 
-    # Annotate frame with pose and hand landmarks
     annotated_image = draw_pose_landmarks(image, pose_result)
     annotated_image = draw_hand_landmarks(annotated_image, hand_result)
 
