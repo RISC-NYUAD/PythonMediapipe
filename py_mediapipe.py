@@ -79,14 +79,17 @@ def draw_hand_landmarks(rgb_image, detection_result):
         )
     return annotated_image
 
-capture = cv2.VideoCapture(0)
+capture = cv2.VideoCapture(-1, cv2.CAP_V4L2)
 
 if not capture.isOpened():
     print("Failed to open video source")
     exit()
 
+capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
+capture.set(cv2.CAP_PROP_FPS, 30)
 capture.set(3, 1920)
 capture.set(4, 1080)
+
 
 source_fps = int(capture.get(cv2.CAP_PROP_FPS))
 source_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -94,7 +97,6 @@ source_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 print(f"Source video FPS: {source_fps}, Dimensions: {source_width}x{source_height}")
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-outVideo = cv2.VideoWriter("video.mp4", fourcc, source_fps, (source_width, source_height))
 outResult = cv2.VideoWriter("result.mp4", fourcc, source_fps, (source_width, source_height))
 
 previousTime = 0
@@ -123,13 +125,11 @@ while capture.isOpened():
     annotated_bgr_image = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
     cv2.imshow("Pose and Hand Detection", annotated_bgr_image)
 
-    outVideo.write(frame)
     outResult.write(annotated_bgr_image)
 
-    if cv2.waitKey(5) & 0xFF == ord("q"):
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
 capture.release()
-outVideo.release()
 outResult.release()
 cv2.destroyAllWindows()
