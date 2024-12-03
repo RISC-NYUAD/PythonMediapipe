@@ -5,12 +5,12 @@ from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import time
+import time 
 
 pose_options = vision.PoseLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="pose_landmarker_full.task",
-        delegate=python.BaseOptions.Delegate.GPU
+        delegate=python.BaseOptions.Delegate.CPU
     ),
     output_segmentation_masks=True
 )
@@ -19,8 +19,9 @@ pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 hand_options = vision.HandLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="hand_landmarker.task",
-        delegate=python.BaseOptions.Delegate.GPU
+        delegate=python.BaseOptions.Delegate.CPU
     ),
+    
     num_hands=2 
 )
 hand_detector = vision.HandLandmarker.create_from_options(hand_options)
@@ -44,10 +45,10 @@ def draw_pose_landmarks(rgb_image, detection_result):
             pose_landmarks_proto,
             solutions.pose.POSE_CONNECTIONS,
             solutions.drawing_utils.DrawingSpec(
-                color=(255, 0, 0), thickness=1, circle_radius=1
+                color=(255, 0, 0), thickness=1, circle_radius=2
             ),
             solutions.drawing_utils.DrawingSpec(
-                color=(0, 255, 0), thickness=1, circle_radius=1
+                color=(0, 255, 0), thickness=1, circle_radius=2
             ),
         )
     return annotated_image
@@ -71,20 +72,21 @@ def draw_hand_landmarks(rgb_image, detection_result):
             hand_landmarks_proto,
             solutions.hands.HAND_CONNECTIONS,
             solutions.drawing_utils.DrawingSpec(
-                color=(255, 0, 0), thickness=1, circle_radius=1
+                color=(255, 0, 0), thickness=1, circle_radius=2
             ),
             solutions.drawing_utils.DrawingSpec(
-                color=(0, 255, 0), thickness=1, circle_radius=1
+                color=(0, 255, 0), thickness=1, circle_radius=2
             ),
         )
     return annotated_image
 
-capture = cv2.VideoCapture(-1, cv2.CAP_V4L2)
+capture = cv2.VideoCapture(0)
 
 if not capture.isOpened():
     print("Failed to open video source")
     exit()
 
+capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
 capture.set(cv2.CAP_PROP_FPS, 30)
 capture.set(3, 1920)
@@ -116,6 +118,7 @@ while capture.isOpened():
 
     annotated_image = draw_pose_landmarks(image, pose_result)
     annotated_image = draw_hand_landmarks(annotated_image, hand_result)
+
 
     currentTime = time.time()
     fps = 1 / (currentTime - previousTime)
