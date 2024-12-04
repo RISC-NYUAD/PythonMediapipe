@@ -7,12 +7,14 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import time 
 
+VisionRunningMode = mp.tasks.vision.RunningMode
 pose_options = vision.PoseLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="pose_landmarker_full.task",
         delegate=python.BaseOptions.Delegate.CPU
     ),
-    output_segmentation_masks=True
+    running_mode=VisionRunningMode.VIDEO,
+    output_segmentation_masks=True,
 )
 pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 
@@ -21,14 +23,14 @@ hand_options = vision.HandLandmarkerOptions(
         model_asset_path="hand_landmarker.task",
         delegate=python.BaseOptions.Delegate.CPU
     ),
-    
+    running_mode=VisionRunningMode.VIDEO,
     num_hands=2 
 )
 hand_detector = vision.HandLandmarker.create_from_options(hand_options)
 
 def draw_pose_landmarks(rgb_image, detection_result):
     pose_landmarks_list = detection_result.pose_landmarks
-    annotated_image = np.copy(rgb_image)
+    annotated_frame = np.copy(rgb_image)
 
     for pose_landmarks in pose_landmarks_list:
         pose_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
@@ -41,7 +43,7 @@ def draw_pose_landmarks(rgb_image, detection_result):
             ]
         )
         solutions.drawing_utils.draw_landmarks(
-            annotated_image,
+            annotated_frame,
             pose_landmarks_proto,
             solutions.pose.POSE_CONNECTIONS,
             solutions.drawing_utils.DrawingSpec(
@@ -51,11 +53,11 @@ def draw_pose_landmarks(rgb_image, detection_result):
                 color=(0, 255, 0), thickness=1, circle_radius=2
             ),
         )
-    return annotated_image
+    return annotated_frame
 
 def draw_hand_landmarks(rgb_image, detection_result):
     hand_landmarks_list = detection_result.hand_landmarks
-    annotated_image = np.copy(rgb_image)
+    annotated_frame = np.copy(rgb_image)
 
     for hand_landmarks in hand_landmarks_list:
         hand_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
@@ -68,7 +70,7 @@ def draw_hand_landmarks(rgb_image, detection_result):
             ]
         )
         solutions.drawing_utils.draw_landmarks(
-            annotated_image,
+            annotated_frame,
             hand_landmarks_proto,
             solutions.hands.HAND_CONNECTIONS,
             solutions.drawing_utils.DrawingSpec(
@@ -78,7 +80,7 @@ def draw_hand_landmarks(rgb_image, detection_result):
                 color=(0, 255, 0), thickness=1, circle_radius=2
             ),
         )
-    return annotated_image
+    return annotated_frame
 
 capture = cv2.VideoCapture(0)
 
@@ -110,25 +112,27 @@ while capture.isOpened():
         print("Failed to read frame.")
         break
 
-    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
+    frame.flags.writeable = False
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    mp_frame = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
-    pose_result = pose_detector.detect(mp_image)
-    hand_result = hand_detector.detect(mp_image)
+    timestamp = int(time.time() * 1000)
+    pose_result = pose_detector.detect_for_video(mp_frame, timestamp)
+    hand_result = hand_detector.detect_for_video(mp_frame, timestamp)
 
-    annotated_image = draw_pose_landmarks(image, pose_result)
-    annotated_image = draw_hand_landmarks(annotated_image, hand_result)
-
+    frame.flags.writeable = True
+    annotated_frame = draw_pose_landmarks(frame, pose_result)
+    annotated_frame = draw_hand_landmarks(annotated_frame, hand_result)
 
     currentTime = time.time()
     fps = 1 / (currentTime - previousTime)
     previousTime = currentTime
 
-    cv2.putText(annotated_image, f"{int(fps)} FPS", (10, 70), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-    annotated_bgr_image = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
-    cv2.imshow("Pose and Hand Detection", annotated_bgr_image)
+    cv2.putText(annotated_frame, f"{int(fps)} FPS", (10, 70), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+    annotated_bgr_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
+    cv2.imshow("Pose and Hand Detection", annotated_bgr_frame)
 
-    outResult.write(annotated_bgr_image)
+    outResult.write(annotated_bgr_frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
