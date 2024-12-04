@@ -11,7 +11,7 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 pose_options = vision.PoseLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="pose_landmarker_full.task",
-        delegate=python.BaseOptions.Delegate.CPU
+        delegate=python.BaseOptions.Delegate.GPU
     ),
     running_mode=VisionRunningMode.VIDEO,
     output_segmentation_masks=True,
@@ -21,7 +21,7 @@ pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 hand_options = vision.HandLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="hand_landmarker.task",
-        delegate=python.BaseOptions.Delegate.CPU
+        delegate=python.BaseOptions.Delegate.GPU
     ),
     running_mode=VisionRunningMode.VIDEO,
     num_hands=2 
@@ -83,6 +83,7 @@ def draw_hand_landmarks(rgb_image, detection_result):
     return annotated_frame
 
 capture = cv2.VideoCapture(0)
+#capture = cv2.VideoCapture('test.mp4')
 
 if not capture.isOpened():
     print("Failed to open video source")

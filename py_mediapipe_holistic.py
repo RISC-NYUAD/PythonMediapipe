@@ -7,6 +7,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_holistic = mp.solutions.holistic
 
 capture = cv2.VideoCapture(0)
+#capture = cv2.VideoCapture('test.mp4')
 
 if not capture.isOpened():
     print("Failed to open video source")
@@ -32,6 +33,9 @@ previousTime = 0
 with mp_holistic.Holistic(
   static_image_mode=False,
   model_complexity=0,
+  #model_complexity=1,
+  #model_complexity=2,
+  enable_segmentation=True,
   min_detection_confidence=0.5,
   min_tracking_confidence=0.5) as holistic:
   while capture.isOpened():
@@ -52,21 +56,20 @@ with mp_holistic.Holistic(
         frame,
         results.pose_landmarks,
         mp_holistic.POSE_CONNECTIONS,
-        landmark_drawing_spec=mp_drawing_styles
-        .get_default_pose_landmarks_style())
+        landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
+        connection_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0),thickness=2,circle_radius=2))
     mp_drawing.draw_landmarks(
         frame,
         results.left_hand_landmarks,
         mp_holistic.HAND_CONNECTIONS,
-        mp_drawing_styles.get_default_hand_landmarks_style(),
-        mp_drawing_styles.get_default_hand_connections_style()
-    )
+        landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
+        connection_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0),thickness=2,circle_radius=2))
     mp_drawing.draw_landmarks(
         frame,
         results.right_hand_landmarks,
         mp_holistic.HAND_CONNECTIONS,
-        mp_drawing_styles.get_default_hand_landmarks_style(),
-        mp_drawing_styles.get_default_hand_connections_style())
+        landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2),
+        connection_drawing_spec=mp_drawing.DrawingSpec(color=(0, 255, 0),thickness=2,circle_radius=2))
 
     currentTime = time.time()
     fps = 1 / (currentTime - previousTime)
