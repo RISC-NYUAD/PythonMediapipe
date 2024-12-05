@@ -11,20 +11,27 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 pose_options = vision.PoseLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="models/pose_landmarker_full.task",
-        delegate=python.BaseOptions.Delegate.GPU
+        delegate=python.BaseOptions.Delegate.CPU
     ),
     running_mode=VisionRunningMode.VIDEO,
     output_segmentation_masks=True,
+
+    min_pose_detection_confidence = 0.3,
+    min_pose_presence_confidence = 0.3,
+    min_tracking_confidence = 0.3,
 )
 pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 
 hand_options = vision.HandLandmarkerOptions(
     base_options=python.BaseOptions(
         model_asset_path="models/hand_landmarker.task",
-        delegate=python.BaseOptions.Delegate.GPU
+        delegate=python.BaseOptions.Delegate.CPU
     ),
     running_mode=VisionRunningMode.VIDEO,
-    num_hands=2 
+    num_hands=2,
+    min_hand_detection_confidence = 0.3,
+    min_hand_presence_confidence = 0.3,
+    min_tracking_confidence = 0.3,
 )
 hand_detector = vision.HandLandmarker.create_from_options(hand_options)
 
@@ -47,10 +54,10 @@ def draw_pose_landmarks(rgb_image, detection_result):
             pose_landmarks_proto,
             solutions.pose.POSE_CONNECTIONS,
             solutions.drawing_utils.DrawingSpec(
-                color=(255, 0, 0), thickness=1, circle_radius=2
+                color=(255, 0, 0), thickness=2, circle_radius=2
             ),
             solutions.drawing_utils.DrawingSpec(
-                color=(0, 255, 0), thickness=1, circle_radius=2
+                color=(0, 255, 0), thickness=2, circle_radius=2
             ),
         )
     return annotated_frame
@@ -74,10 +81,10 @@ def draw_hand_landmarks(rgb_image, detection_result):
             hand_landmarks_proto,
             solutions.hands.HAND_CONNECTIONS,
             solutions.drawing_utils.DrawingSpec(
-                color=(255, 0, 0), thickness=1, circle_radius=2
+                color=(255, 0, 0), thickness=2, circle_radius=2
             ),
             solutions.drawing_utils.DrawingSpec(
-                color=(0, 255, 0), thickness=1, circle_radius=2
+                color=(0, 255, 0), thickness=2, circle_radius=2
             ),
         )
     return annotated_frame
