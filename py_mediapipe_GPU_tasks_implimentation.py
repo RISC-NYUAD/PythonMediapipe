@@ -10,7 +10,7 @@ import time
 VisionRunningMode = mp.tasks.vision.RunningMode
 pose_options = vision.PoseLandmarkerOptions(
     base_options=python.BaseOptions(
-        model_asset_path="pose_landmarker_full.task",
+        model_asset_path="models/pose_landmarker_full.task",
         delegate=python.BaseOptions.Delegate.GPU
     ),
     running_mode=VisionRunningMode.VIDEO,
@@ -20,7 +20,7 @@ pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 
 hand_options = vision.HandLandmarkerOptions(
     base_options=python.BaseOptions(
-        model_asset_path="hand_landmarker.task",
+        model_asset_path="models/hand_landmarker.task",
         delegate=python.BaseOptions.Delegate.GPU
     ),
     running_mode=VisionRunningMode.VIDEO,
