@@ -38,10 +38,9 @@ while capture.isOpened():
 
     cv2.putText(image, f"{int(fps)} FPS", (10, 70), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
     annotated_bgr_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imshow("Pose and Hand Detection", annotated_bgr_image)
+    cv2.imshow("Camera Test", annotated_bgr_image)
 
     outResult.write(annotated_bgr_image)
-
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break

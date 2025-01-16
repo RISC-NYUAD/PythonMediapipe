@@ -5,7 +5,7 @@ from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import time 
+import time
 
 VisionRunningMode = mp.tasks.vision.RunningMode
 pose_options = vision.PoseLandmarkerOptions(
@@ -16,9 +16,9 @@ pose_options = vision.PoseLandmarkerOptions(
     running_mode=VisionRunningMode.VIDEO,
     output_segmentation_masks=True,
 
-    min_pose_detection_confidence = 0.3,
-    min_pose_presence_confidence = 0.3,
-    min_tracking_confidence = 0.3,
+    min_pose_detection_confidence=0.3,
+    min_pose_presence_confidence=0.3,
+    min_tracking_confidence=0.3,
 )
 pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 
@@ -29,11 +29,27 @@ hand_options = vision.HandLandmarkerOptions(
     ),
     running_mode=VisionRunningMode.VIDEO,
     num_hands=2,
-    min_hand_detection_confidence = 0.3,
-    min_hand_presence_confidence = 0.3,
-    min_tracking_confidence = 0.3,
+    min_hand_detection_confidence=0.3,
+    min_hand_presence_confidence=0.3,
+    min_tracking_confidence=0.3,
 )
 hand_detector = vision.HandLandmarker.create_from_options(hand_options)
+
+def save_landmarks_to_file(file, pose_landmarks_list, hand_landmarks_list):
+    with open(file, "a") as f:
+        if pose_landmarks_list:
+            f.write("Pose Landmarks:\n")
+            for idx, pose_landmarks in enumerate(pose_landmarks_list):
+                f.write(f"  Person {idx + 1}:\n")
+                for lm in pose_landmarks:
+                    f.write(f"    x: {lm.x:.4f}, y: {lm.y:.4f}, z: {lm.z:.4f}\n")
+        if hand_landmarks_list:
+            f.write("Hand Landmarks:\n")
+            for idx, hand_landmarks in enumerate(hand_landmarks_list):
+                f.write(f"  Hand {idx + 1}:\n")
+                for lm in hand_landmarks:
+                    f.write(f"    x: {lm.x:.4f}, y: {lm.y:.4f}, z: {lm.z:.4f}\n")
+        f.write("\n")
 
 def draw_pose_landmarks(rgb_image, detection_result):
     pose_landmarks_list = detection_result.pose_landmarks
@@ -90,7 +106,6 @@ def draw_hand_landmarks(rgb_image, detection_result):
     return annotated_frame
 
 capture = cv2.VideoCapture(0)
-#capture = cv2.VideoCapture('test.mp4')
 
 if not capture.isOpened():
     print("Failed to open video source")
@@ -102,7 +117,6 @@ capture.set(cv2.CAP_PROP_FPS, 30)
 capture.set(3, 1920)
 capture.set(4, 1080)
 
-
 source_fps = int(capture.get(cv2.CAP_PROP_FPS))
 source_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
 source_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -110,6 +124,9 @@ print(f"Source video FPS: {source_fps}, Dimensions: {source_width}x{source_heigh
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 outResult = cv2.VideoWriter("result.mp4", fourcc, source_fps, (source_width, source_height))
+
+landmarks_file = "landmarks.txt"
+open(landmarks_file, "w").close()
 
 previousTime = 0
 
@@ -131,6 +148,8 @@ while capture.isOpened():
     frame.flags.writeable = True
     annotated_frame = draw_pose_landmarks(frame, pose_result)
     annotated_frame = draw_hand_landmarks(annotated_frame, hand_result)
+
+    save_landmarks_to_file(landmarks_file, pose_result.pose_landmarks, hand_result.hand_landmarks)
 
     currentTime = time.time()
     fps = 1 / (currentTime - previousTime)
