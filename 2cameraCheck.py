@@ -1,8 +1,8 @@
 import cv2
 import time
 
-capture0 = cv2.VideoCapture(0)
-capture1 = cv2.VideoCapture(1)
+capture0 = cv2.VideoCapture(1)
+capture1 = cv2.VideoCapture(0)
 
 if not capture0.isOpened() and not capture1.isOpened():
     print("Failed to open video sources")
