@@ -10,8 +10,8 @@ if not capture.isOpened():
 capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
 capture.set(cv2.CAP_PROP_FPS, 30)
-capture.set(3, 1920)
-capture.set(4, 1080)
+capture.set(3, 1280)
+capture.set(4, 720)
 
 source_fps = int(capture.get(cv2.CAP_PROP_FPS))
 source_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
