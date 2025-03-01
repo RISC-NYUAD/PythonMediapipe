@@ -35,22 +35,6 @@ hand_options = vision.HandLandmarkerOptions(
 )
 hand_detector = vision.HandLandmarker.create_from_options(hand_options)
 
-def save_landmarks_to_file(file, pose_landmarks_list, hand_landmarks_list):
-    with open(file, "a") as f:
-        if pose_landmarks_list:
-            f.write("Pose Landmarks:\n")
-            for idx, pose_landmarks in enumerate(pose_landmarks_list):
-                f.write(f"  Person {idx + 1}:\n")
-                for lm in pose_landmarks:
-                    f.write(f"    x: {lm.x:.4f}, y: {lm.y:.4f}, z: {lm.z:.4f}\n")
-        if hand_landmarks_list:
-            f.write("Hand Landmarks:\n")
-            for idx, hand_landmarks in enumerate(hand_landmarks_list):
-                f.write(f"  Hand {idx + 1}:\n")
-                for lm in hand_landmarks:
-                    f.write(f"    x: {lm.x:.4f}, y: {lm.y:.4f}, z: {lm.z:.4f}\n")
-        f.write("\n")
-
 def draw_pose_landmarks(rgb_image, detection_result):
     pose_landmarks_list = detection_result.pose_landmarks
     annotated_frame = np.copy(rgb_image)
@@ -105,65 +89,104 @@ def draw_hand_landmarks(rgb_image, detection_result):
         )
     return annotated_frame
 
-capture = cv2.VideoCapture(0)
+capture0 = cv2.VideoCapture(0)
+capture1 = cv2.VideoCapture(1)
 
-if not capture.isOpened():
-    print("Failed to open video source")
+if not capture0.isOpened() and not capture1.isOpened():
+    print("Failed to open video sources")
     exit()
 
-capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
-capture.set(cv2.CAP_PROP_FPS, 30)
-capture.set(3, 1920)
-capture.set(4, 1080)
+capture0.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+capture0.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
+capture0.set(cv2.CAP_PROP_FPS, 30)
+capture0.set(3, 1280)
+capture0.set(4, 720)
 
-source_fps = int(capture.get(cv2.CAP_PROP_FPS))
-source_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-source_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-print(f"Source video FPS: {source_fps}, Dimensions: {source_width}x{source_height}")
+capture1.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+capture1.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
+capture1.set(cv2.CAP_PROP_FPS, 30)
+capture1.set(3, 1280)
+capture1.set(4, 720)
 
-fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-outResult = cv2.VideoWriter("result.mp4", fourcc, source_fps, (source_width, source_height))
+source0_fps = int(capture0.get(cv2.CAP_PROP_FPS))
+source0_width = int(capture0.get(cv2.CAP_PROP_FRAME_WIDTH))
+source0_height = int(capture0.get(cv2.CAP_PROP_FRAME_HEIGHT))
+print(f"Source video FPS: {source0_fps}, Dimensions: {source0_width}x{source0_height}")
 
-landmarks_file = "landmarks.txt"
-open(landmarks_file, "w").close()
+source1_fps = int(capture1.get(cv2.CAP_PROP_FPS))
+source1_width = int(capture1.get(cv2.CAP_PROP_FRAME_WIDTH))
+source1_height = int(capture1.get(cv2.CAP_PROP_FRAME_HEIGHT))
+print(f"Source video FPS: {source1_fps}, Dimensions: {source1_width}x{source1_height}")
+
+fourcc0 = cv2.VideoWriter_fourcc(*"mp4v")
+outResult0 = cv2.VideoWriter("result.mp4", fourcc0, source0_fps, (source0_width, source0_height))
+
+fourcc1 = cv2.VideoWriter_fourcc(*"mp4v")
+outResult1 = cv2.VideoWriter("result.mp4", fourcc1, source1_fps, (source1_width, source1_height))
 
 previousTime = 0
 
-while capture.isOpened():
-    ret, frame = capture.read()
+while capture0.isOpened() and capture1.isOpened():
+    ret0, frame0 = capture0.read()
+    ret1, frame1 = capture1.read()
 
-    if not ret or frame is None:
-        print("Failed to read frame.")
+    if not ret0 or frame0 is None:
+        print("Failed to read frame from source 0.")
         break
 
-    frame.flags.writeable = False
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    mp_frame = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+    if not ret1 or frame1 is None:
+        print("Failed to read frame from source 1.")
+        break
+
+    frame0.flags.writeable = False
+    frame0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2RGB)
+    mp_frame0 = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame0)
+
+    frame1.flags.writeable = False
+    frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
+    mp_frame1 = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame1)
 
     timestamp = int(time.time() * 1000)
-    pose_result = pose_detector.detect_for_video(mp_frame, timestamp)
-    hand_result = hand_detector.detect_for_video(mp_frame, timestamp)
+    pose_result0 = pose_detector.detect_for_video(mp_frame0, timestamp)
+    hand_result0 = hand_detector.detect_for_video(mp_frame0, timestamp)
 
-    frame.flags.writeable = True
-    annotated_frame = draw_pose_landmarks(frame, pose_result)
-    annotated_frame = draw_hand_landmarks(annotated_frame, hand_result)
+    timestamp = int(time.time() * 1000)
+    pose_result1 = pose_detector.detect_for_video(mp_frame1, timestamp)
+    hand_result1 = hand_detector.detect_for_video(mp_frame1, timestamp)
 
-    #save_landmarks_to_file(landmarks_file, pose_result.pose_landmarks, hand_result.hand_landmarks)
+    frame0.flags.writeable = True
+    frame1.flags.writeable = True
+
+
+    annotated_frame0 = draw_pose_landmarks(frame0, pose_result0)
+    annotated_frame0 = draw_hand_landmarks(annotated_frame0, hand_result0)
+
+    annotated_frame1 = draw_pose_landmarks(frame1, pose_result1)
+    annotated_frame1 = draw_hand_landmarks(annotated_frame1, hand_result1)
 
     currentTime = time.time()
     fps = 1 / (currentTime - previousTime)
     previousTime = currentTime
 
-    cv2.putText(annotated_frame, f"{int(fps)} FPS", (10, 70), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
-    annotated_bgr_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
-    cv2.imshow("Pose and Hand Detection", annotated_bgr_frame)
+    cv2.putText(annotated_frame0, f"{int(fps)} FPS", (10, 70), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+    annotated_bgr_frame0 = cv2.cvtColor(annotated_frame0, cv2.COLOR_RGB2BGR)
 
-    outResult.write(annotated_bgr_frame)
+    cv2.putText(annotated_frame1, f"{int(fps)} FPS", (10, 70), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+    annotated_bgr_frame1 = cv2.cvtColor(annotated_frame1, cv2.COLOR_RGB2BGR)
+
+
+
+    cv2.imshow("Source 0", annotated_bgr_frame0)
+    cv2.imshow("Source 1", annotated_bgr_frame1)
+
+    outResult0.write(annotated_bgr_frame0)
+    outResult1.write(annotated_bgr_frame1)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-capture.release()
-outResult.release()
+capture0.release()
+capture1.release()
+outResult0.release()
+outResult1.release()
 cv2.destroyAllWindows()
