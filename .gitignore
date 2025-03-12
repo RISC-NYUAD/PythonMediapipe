@@ -1,6 +1,7 @@
 *.mp4
-test.py
+test*
 landmarks.*
+*vscode*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

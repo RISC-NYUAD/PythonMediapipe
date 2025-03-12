@@ -16,9 +16,9 @@ pose_options = vision.PoseLandmarkerOptions(
     running_mode=VisionRunningMode.VIDEO,
     output_segmentation_masks=True,
 
-    min_pose_detection_confidence=0.3,
-    min_pose_presence_confidence=0.3,
-    min_tracking_confidence=0.3,
+    min_pose_detection_confidence=0.8,
+    min_pose_presence_confidence=0.8,
+    min_tracking_confidence=0.8,
 )
 pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
 
@@ -29,9 +29,9 @@ hand_options = vision.HandLandmarkerOptions(
     ),
     running_mode=VisionRunningMode.VIDEO,
     num_hands=2,
-    min_hand_detection_confidence=0.3,
-    min_hand_presence_confidence=0.3,
-    min_tracking_confidence=0.3,
+    min_hand_detection_confidence=0.8,
+    min_hand_presence_confidence=0.8,
+    min_tracking_confidence=0.8,
 )
 hand_detector = vision.HandLandmarker.create_from_options(hand_options)
 
